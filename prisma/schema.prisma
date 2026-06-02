@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model McpServer {
+  id        String   @id @default(uuid())
+  name      String
+  url       String
+  apiKey    String?
+  type      String   @default("openai")
+  status    String   @default("disconnected")
+  policyId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  logs      McpLog[]
+  redTeamRuns RedTeamRun[]
+}
+
+model McpLog {
+  id         String   @id @default(uuid())
+  serverId   String
+  server     McpServer @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  request    String
+  response   String?
+  status     String   @default("pending")
+  policyEval String?
+  duration   Int?
+  tokensIn   Int?
+  tokensOut  Int?
+  cost       Float?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+}
+
+model BridgeLog {
+  id             String   @id @default(uuid())
+  sessionId      String?
+  conversationId String?
+  method         String   @default("POST")
+  url            String?
+  request        String
+  response       String?
+  status         Int      @default(200)
+  durationMs     Int?
+  contentType    String?
+  userAgent      String?
+  ip             String?
+  createdAt      DateTime @default(now())
+  tokens         ClientToken[]
+}
+
+model ClientToken {
+  id        String   @id @default(uuid())
+  source    String   // "chatgpt" | "claude"
+  type      String   // "api_key" | "session_token" | "bearer_token" | "cookie"
+  token     String
+  label     String?  // user-friendly description
+  url       String?  // request URL where token was found
+  logId     String?
+  log       BridgeLog? @relation(fields: [logId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model AiPolicy {
+  id          String      @id @default(uuid())
+  name        String
+  description String?
+  enabled     Boolean     @default(true)
+  rules       String      @default("[]")
+  scope       String      @default("global")
+  priority    Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model RedTeamScenario {
+  id           String   @id @default(uuid())
+  name         String
+  description  String?
+  category     String   @default("prompt-injection")
+  framework    String   @default("owasp")
+  frameworkId  String?
+  prompt       String
+  expectedRisk String   @default("high")
+  severity     String   @default("HIGH")
+  createdAt    DateTime @default(now())
+  runs         RedTeamRun[]
+}
+
+model RedTeamRun {
+  id         String           @id @default(uuid())
+  serverId   String
+  server     McpServer        @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  scenarioId String?
+  scenario   RedTeamScenario? @relation(fields: [scenarioId], references: [id])
+  prompt     String
+  response   String?
+  status     String           @default("running")
+  risk       String?
+  analysis   String?
+  duration   Int?
+  createdAt  DateTime         @default(now())
+}

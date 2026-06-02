@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 340px;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+    }
+    .logo h1 {
+      font-size: 15px; font-weight: 700;
+      background: linear-gradient(135deg, #3b7cf4, #6c47ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .status {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 12px; border-radius: 8px;
+      background: rgba(52,211,153,0.1);
+      border: 1px solid rgba(52,211,153,0.2);
+      font-size: 12px; margin-bottom: 14px;
+    }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: #34d399; }
+    .dot.off { background: #f87171; }
+    label {
+      display: block; font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      color: #94a3b8; margin-bottom: 4px;
+    }
+    input {
+      width: 100%; padding: 8px 10px; border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      color: #e2e8f0; font-size: 12px; outline: none;
+      margin-bottom: 12px;
+    }
+    input:focus { border-color: #3b7cf4; }
+    .btn {
+      width: 100%; padding: 9px 0; border: none; border-radius: 7px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      background: linear-gradient(135deg, #3b7cf4, #6c47ff);
+      color: #fff; margin-bottom: 8px;
+    }
+    .btn:hover { opacity: 0.9; }
+    .footer { font-size: 10px; color: #64748b; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="logo">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="5" fill="url(#g)"/>
+      <text x="5" y="17" fill="#fff" font-size="14" font-weight="bold">H</text>
+      <defs><linearGradient id="g" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#3b7cf4"/><stop offset="1" stop-color="#6c47ff"/></linearGradient></defs>
+    </svg>
+    <h1>HostedScan LLM Bridge</h1>
+  </div>
+
+  <div class="status" id="status">
+    <span class="dot" id="dot"></span>
+    <span id="statusText">Connected to platform</span>
+  </div>
+
+  <label>Platform Endpoint</label>
+  <input id="endpoint" value="https://undesired-relatable-backtalk.ngrok-free.dev/api/ai/bridge-logs" />
+
+  <button class="btn" id="saveBtn">Save</button>
+  <button class="btn" id="testBtn" style="background:rgba(255,255,255,0.06);color:#94a3b8;">Test Connection</button>
+
+  <div class="footer">Captures ChatGPT conversations and sends them to your HostedScan instance.</div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
