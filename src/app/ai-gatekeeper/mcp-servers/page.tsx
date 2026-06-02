@@ -87,7 +87,7 @@ export default function McpServersPage() {
     fetchServers();
   }
 
-  const NGROK_URL = "https://undesired-relatable-backtalk.ngrok-free.dev";
+  const NGROK_URL = "https://cerberus-ai.vercel.app";
 
   function copyConnectUrl(server: any) {
     navigator.clipboard.writeText(`${NGROK_URL}/api/ai/mcp-servers/${server.id}/mcp`);

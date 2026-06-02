@@ -1,7 +1,7 @@
 // HostedScan LLM Bridge — Background Service Worker
 // Fallback injector: used when CSP blocks the content script's DOM injection.
 
-const DEFAULT_ENDPOINT = "https://undesired-relatable-backtalk.ngrok-free.dev/api/ai/bridge-logs";
+const DEFAULT_ENDPOINT = "https://cerberus-ai.vercel.app/api/ai/bridge-logs";
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.sync.set({

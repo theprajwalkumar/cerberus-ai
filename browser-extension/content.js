@@ -1,7 +1,7 @@
 // HostedScan LLM Bridge — Content Script
 console.log("[HS Bridge] Content script loaded at", document.readyState);
 
-const DEFAULT_ENDPOINT = "https://undesired-relatable-backtalk.ngrok-free.dev/api/ai/bridge-logs";
+const DEFAULT_ENDPOINT = "https://cerberus-ai.vercel.app/api/ai/bridge-logs";
 
 // Try to extract nonce from page's own scripts to bypass CSP
 function getNonce() {
