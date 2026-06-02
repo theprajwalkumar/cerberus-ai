@@ -3,3 +3,7 @@ node_modules
 .next/**
 node_modules/**
 *.tsbuildinfo
+uploads
+uploads/**
+prisma/dev.db
+prisma/dev.db-journal
