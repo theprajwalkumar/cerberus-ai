@@ -138,7 +138,6 @@ export async function GET(request: NextRequest) {
       notPatterns.push({ AND: [{ method: "GET" }, { url: { contains: "/models" } }, { NOT: { url: { contains: "/models/" } } }] });
       notPatterns.push({ AND: [{ method: "GET" }, { url: { contains: "/conversations" } }] });
       notPatterns.push({ url: { contains: "s-cdn.anthropic.com" } });
-      notPatterns.push({ AND: [{ method: "GET" }, { url: { contains: "claude.ai/api/organizations" } }, { NOT: { url: { contains: "/chat/" } } }] });
       where.NOT = notPatterns;
     }
 
