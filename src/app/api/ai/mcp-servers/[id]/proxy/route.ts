@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { prisma, sanitize } from "@/lib/db";
 
 export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
@@ -20,10 +20,10 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           await prisma.mcpLog.create({
             data: {
               serverId: params.id,
-              request: prompt,
+              request: sanitize(prompt) || "",
               response: null,
               status: "blocked",
-              policyEval: JSON.stringify({ blockedBy: rule.name, reason: `Matched keyword from rule: ${rule.name}` }),
+              policyEval: sanitize(JSON.stringify({ blockedBy: rule.name, reason: `Matched keyword from rule: ${rule.name}` })) || "",
               duration: Date.now() - start,
             },
           });
@@ -33,10 +33,10 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
           await prisma.mcpLog.create({
             data: {
               serverId: params.id,
-              request: prompt,
+              request: sanitize(prompt) || "",
               response: null,
               status: "blocked",
-              policyEval: JSON.stringify({ blockedBy: rule.name, reason: "Exceeded max token limit" }),
+              policyEval: sanitize(JSON.stringify({ blockedBy: rule.name, reason: "Exceeded max token limit" })) || "",
               duration: Date.now() - start,
             },
           });
@@ -73,8 +73,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     await prisma.mcpLog.create({
       data: {
         serverId: params.id,
-        request: prompt,
-        response: typeof parsed === "string" ? parsed : JSON.stringify(parsed),
+        request: sanitize(prompt) || "",
+        response: sanitize(typeof parsed === "string" ? parsed : JSON.stringify(parsed)) || "",
         status: response.ok ? "success" : "error",
         duration,
         tokensIn: body.messages?.length || undefined,
@@ -88,8 +88,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     await prisma.mcpLog.create({
       data: {
         serverId: params.id,
-        request: prompt,
-        response: err.message,
+        request: sanitize(prompt) || "",
+        response: sanitize(err.message) || "",
         status: "error",
         duration,
       },

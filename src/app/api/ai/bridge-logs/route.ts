@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { prisma, sanitize } from "@/lib/db";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -41,19 +41,21 @@ export async function POST(request: NextRequest) {
       pruneOldLogs().catch(() => {});
     }
 
+    const rawRequest = typeof body.request === "string" ? body.request : (body.request ? JSON.stringify(body.request) : "");
+
     const log = await prisma.bridgeLog.create({
       data: {
         sessionId: body.sessionId || null,
         conversationId: body.conversationId || null,
         method: body.method || "POST",
-        url: body.url || null,
-        request: typeof body.request === "string" ? body.request : (body.request ? JSON.stringify(body.request) : ""),
-        response: body.response || null,
+        url: sanitize(body.url),
+        request: sanitize(rawRequest) || "",
+        response: sanitize(body.response),
         status: body.status || 200,
         durationMs: body.durationMs ? Math.round(body.durationMs) : null,
         contentType: body.contentType || null,
         userAgent: body.userAgent || null,
-        ip: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || null,
+        ip: sanitize(request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || null),
       },
     });
 

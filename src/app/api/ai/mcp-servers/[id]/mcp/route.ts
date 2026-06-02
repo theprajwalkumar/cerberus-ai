@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { prisma, sanitize } from "@/lib/db";
 
 const BROWSER_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36";
 const clientNameCache = new Map<string, string>();
@@ -55,10 +55,10 @@ async function evaluatePolicy(server: any, text: string, serverId: string, start
           await prisma.mcpLog.create({
             data: {
               serverId,
-              request: text.substring(0, 2000),
+              request: sanitize(text.substring(0, 2000)) || "",
               response: null,
               status: "blocked",
-              policyEval: JSON.stringify({ blockedBy: rule.name, keyword, reason: `Matched keyword "${keyword}" from rule: ${rule.name}` }),
+              policyEval: sanitize(JSON.stringify({ blockedBy: rule.name, keyword, reason: `Matched keyword "${keyword}" from rule: ${rule.name}` })) || "",
               duration: Date.now() - start,
               userAgent: clientNameCache.get(serverId) || "MCP Client",
             },
@@ -311,8 +311,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     await prisma.mcpLog.create({
       data: {
         serverId: params.id,
-        request: requestLog,
-        response: responseLog,
+        request: sanitize(requestLog) || "",
+        response: sanitize(responseLog) || "",
         status: logStatus,
         duration,
         userAgent: isStandardMcp ? (clientNameCache.get(params.id) || "MCP Client") : `MCP Bridge (${server.type})`,
@@ -341,8 +341,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     await prisma.mcpLog.create({
       data: {
         serverId: params.id,
-        request: requestLog,
-        response: `Error: ${err.message}`,
+        request: sanitize(requestLog) || "",
+        response: sanitize(`Error: ${err.message}`) || "",
         status: "error",
         duration,
         userAgent: clientNameCache.get(params.id) || `MCP Bridge (${server.type})`,
