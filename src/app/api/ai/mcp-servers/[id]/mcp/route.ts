@@ -19,6 +19,10 @@ function buildHeaders(server: any) {
   return headers;
 }
 
+function sanitizeToolName(name: string): string {
+  return name.replace(/[^a-zA-Z0-9_-]/g, "_").substring(0, 64);
+}
+
 function parseMcpResponse(rawText: string): any {
   try { return JSON.parse(rawText); } catch {}
   const dataLines: string[] = [];
@@ -272,6 +276,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         const { execution, ...rest } = tool;
         return {
           ...rest,
+          name: sanitizeToolName(tool.name || ""),
           inputSchema: tool.inputSchema ? cleanSchema(tool.inputSchema) : undefined,
           annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
         };
@@ -396,6 +401,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
           const { execution, ...rest } = tool;
           return {
             ...rest,
+            name: sanitizeToolName(tool.name || ""),
             inputSchema: tool.inputSchema ? cleanSchema(tool.inputSchema) : undefined,
             annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
           };
@@ -455,6 +461,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
         const { execution, ...rest } = tool;
         return {
           ...rest,
+          name: sanitizeToolName(tool.name || ""),
           inputSchema: tool.inputSchema ? cleanSchema(tool.inputSchema) : undefined,
           annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
         };
