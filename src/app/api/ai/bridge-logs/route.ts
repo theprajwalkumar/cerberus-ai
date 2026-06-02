@@ -11,12 +11,34 @@ export async function OPTIONS() {
   return NextResponse.json({}, { headers: corsHeaders });
 }
 
+const MAX_LOGS = 5000;
+
+async function pruneOldLogs() {
+  const count = await prisma.bridgeLog.count();
+  if (count > MAX_LOGS) {
+    const excess = await prisma.bridgeLog.findMany({
+      orderBy: { createdAt: "desc" },
+      skip: MAX_LOGS,
+      take: count - MAX_LOGS,
+      select: { id: true },
+    });
+    const ids = excess.map((l: any) => l.id);
+    if (ids.length > 0) {
+      await prisma.bridgeLog.deleteMany({ where: { id: { in: ids } } });
+    }
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
     if (body.test) {
       return NextResponse.json({ ok: true }, { headers: corsHeaders });
+    }
+
+    if (Math.random() < 0.1) {
+      pruneOldLogs().catch(() => {});
     }
 
     const log = await prisma.bridgeLog.create({
