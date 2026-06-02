@@ -42,6 +42,27 @@ export async function POST(request: NextRequest) {
   }
 }
 
+const BRIDGE_NOISE_PATTERNS = [
+  "/accounts/check",
+  "/sentinel/chat-requirements",
+  "/moderations",
+];
+
+function isBridgeNoise(log: any): boolean {
+  const url = (log.url || "").toLowerCase();
+  const method = (log.method || "").toUpperCase();
+
+  for (const pattern of BRIDGE_NOISE_PATTERNS) {
+    if (url.includes(pattern)) return true;
+  }
+
+  if (method === "GET" && url.includes("/models") && !url.includes("/models/")) return true;
+
+  if (method === "GET" && url.match(/\/conversations(?:\?|$)/)) return true;
+
+  return false;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -50,17 +71,22 @@ export async function GET(request: NextRequest) {
     const sessionId = searchParams.get("sessionId");
     const conversationId = searchParams.get("conversationId");
     const source = searchParams.get("source");
+    const method = searchParams.get("method");
+    const status = searchParams.get("status");
+    const excludeNoise = searchParams.get("excludeNoise") !== "false";
 
     const where: any = {};
     if (sessionId) where.sessionId = sessionId;
     if (conversationId) where.conversationId = conversationId;
+    if (method) where.method = method;
+    if (status) where.status = parseInt(status);
     if (source === "chatgpt") {
       where.url = { contains: "chatgpt.com" };
     } else if (source === "claude") {
       where.url = { contains: "claude.ai" };
     }
 
-    const [logs, total] = await Promise.all([
+    const [allLogs, total] = await Promise.all([
       prisma.bridgeLog.findMany({
         where,
         orderBy: { createdAt: "desc" },
@@ -70,6 +96,8 @@ export async function GET(request: NextRequest) {
       }),
       prisma.bridgeLog.count({ where }),
     ]);
+
+    const logs = excludeNoise ? allLogs.filter((log) => !isBridgeNoise(log)) : allLogs;
 
     return NextResponse.json({ logs, total, limit, offset, hasMore: offset + logs.length < total }, { headers: corsHeaders });
   } catch (error: any) {
@@ -83,10 +111,17 @@ export async function DELETE(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get("action");
     const id = searchParams.get("id");
+    const ids = searchParams.get("ids");
 
     if (id) {
       await prisma.bridgeLog.delete({ where: { id } });
       return NextResponse.json({ ok: true, deleted: 1 }, { headers: corsHeaders });
+    }
+
+    if (ids) {
+      const idList = ids.split(",").filter(Boolean);
+      const result = await prisma.bridgeLog.deleteMany({ where: { id: { in: idList } } });
+      return NextResponse.json({ ok: true, deleted: result.count }, { headers: corsHeaders });
     }
 
     if (action === "cleanup-old") {
@@ -97,7 +132,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ ok: true, deleted: result.count }, { headers: corsHeaders });
     }
 
-    return NextResponse.json({ ok: false, error: "id or action required" }, { status: 400, headers: corsHeaders });
+    return NextResponse.json({ ok: false, error: "id, ids, or action required" }, { status: 400, headers: corsHeaders });
   } catch (error: any) {
     console.error("Bridge log DELETE error:", error);
     return NextResponse.json({ ok: false, error: error.message }, { status: 500, headers: corsHeaders });
