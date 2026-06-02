@@ -124,6 +124,11 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ ok: true, deleted: result.count }, { headers: corsHeaders });
     }
 
+    if (action === "truncate") {
+      await prisma.$executeRawUnsafe('TRUNCATE TABLE "BridgeLog" CASCADE');
+      return NextResponse.json({ ok: true, deleted: -1 }, { headers: corsHeaders });
+    }
+
     if (action === "cleanup-old") {
       const olderThan = searchParams.get("olderThan") || "7";
       const days = parseFloat(olderThan) || 7;

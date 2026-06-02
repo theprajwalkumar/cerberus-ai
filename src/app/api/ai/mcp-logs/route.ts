@@ -44,8 +44,14 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const { searchParams } = new URL(request.url);
+  const action = searchParams.get("action");
   const id = searchParams.get("id");
   const ids = searchParams.get("ids");
+
+  if (action === "truncate") {
+    await prisma.$executeRawUnsafe('TRUNCATE TABLE "McpLog" CASCADE');
+    return NextResponse.json({ ok: true, deleted: -1 });
+  }
 
   if (id) {
     await prisma.mcpLog.delete({ where: { id } });
@@ -58,5 +64,5 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ ok: true, deleted: result.count });
   }
 
-  return NextResponse.json({ ok: false, error: "id or ids required" }, { status: 400 });
+  return NextResponse.json({ ok: false, error: "id, ids, or action required" }, { status: 400 });
 }
