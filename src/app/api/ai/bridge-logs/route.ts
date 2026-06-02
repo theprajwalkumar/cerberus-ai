@@ -84,7 +84,7 @@ function isBridgeNoise(log: any): boolean {
 
   if (method === "GET" && url.match(/\/conversations(?:\?|$)/)) return true;
 
-  if (url.includes("claude.ai/api/organizations")) return true;
+  if (method === "GET" && url.includes("claude.ai/api/organizations") && !url.match(/\/organizations\/[^/]+\//)) return true;
 
   if (url.includes("claude.ai/api/chat/") && method === "POST") {
     if (log.request) {
@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
       }
       notPatterns.push({ AND: [{ method: "GET" }, { url: { contains: "/models" } }, { NOT: { url: { contains: "/models/" } } }] });
       notPatterns.push({ AND: [{ method: "GET" }, { url: { contains: "/conversations" } }] });
-      notPatterns.push({ url: { contains: "claude.ai/api/organizations" } });
+      notPatterns.push({ AND: [{ method: "GET" }, { url: { contains: "claude.ai/api/organizations" } }, { NOT: { url: { contains: "/chat/" } } }] });
       where.NOT = notPatterns;
     }
 
