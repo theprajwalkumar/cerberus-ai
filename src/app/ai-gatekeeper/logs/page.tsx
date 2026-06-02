@@ -476,16 +476,35 @@ export default function LogsPage() {
                     style={{ color: page === 0 ? "var(--color-text-muted)" : "var(--color-text-secondary)", opacity: page === 0 ? 0.4 : 1 }}>
                     <ChevronLeft className="h-3.5 w-3.5" /> Prev
                   </button>
-                  {Array.from({ length: totalPages }, (_, i) => i).map(p => (
-                    <button key={p} onClick={() => goToPage(p)}
-                      className="rounded-lg px-2.5 py-1.5 text-xs font-semibold transition"
-                      style={{
-                        background: p === page ? "#fff" : "transparent",
-                        color: p === page ? "#0a0a0a" : "var(--color-text-secondary)"
-                      }}>
-                      {p + 1}
-                    </button>
-                  ))}
+                  {(() => {
+                    const pages: (number | string)[] = [];
+                    const addPage = (i: number) => pages.push(i);
+                    const addEllipsis = () => { if (pages[pages.length - 1] !== "...") pages.push("..."); };
+                    const startMax = Math.min(3, totalPages);
+                    for (let i = 0; i < startMax; i++) addPage(i);
+                    const left = Math.max(0, page - 2);
+                    const right = Math.min(totalPages - 1, page + 2);
+                    if (left > startMax) addEllipsis();
+                    for (let i = Math.max(startMax, left); i <= right; i++) {
+                      if (pages[pages.length - 1] !== i) addPage(i);
+                    }
+                    if (right < totalPages - 1 - 3) addEllipsis();
+                    for (let i = Math.max(right + 1, totalPages - 3); i < totalPages; i++) addPage(i);
+                    return pages.map((p, idx) =>
+                      p === "..." ? (
+                        <span key={`e${idx}`} className="px-1 text-xs" style={{ color: "var(--color-text-muted)" }}>…</span>
+                      ) : (
+                        <button key={`p${p}`} onClick={() => goToPage(p as number)}
+                          className="rounded-lg px-2.5 py-1.5 text-xs font-semibold transition"
+                          style={{
+                            background: p === page ? "#fff" : "transparent",
+                            color: p === page ? "#0a0a0a" : "var(--color-text-secondary)"
+                          }}>
+                          {(p as number) + 1}
+                        </button>
+                      )
+                    );
+                  })()}
                   <button onClick={() => goToPage(page + 1)} disabled={page >= totalPages - 1}
                     className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition"
                     style={{ color: page >= totalPages - 1 ? "var(--color-text-muted)" : "var(--color-text-secondary)", opacity: page >= totalPages - 1 ? 0.4 : 1 }}>

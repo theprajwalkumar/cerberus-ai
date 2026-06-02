@@ -82,6 +82,17 @@ function isBridgeNoise(log: any): boolean {
 
   if (method === "GET" && url.match(/\/conversations(?:\?|$)/)) return true;
 
+  if (url.includes("claude.ai/api/organizations")) return true;
+
+  if (url.includes("claude.ai/api/chat/") && method === "POST") {
+    if (log.request) {
+      try {
+        const parsed = JSON.parse(log.request);
+        if (parsed?.stream !== true) return true;
+      } catch {}
+    }
+  }
+
   return false;
 }
 
@@ -107,6 +118,16 @@ export async function GET(request: NextRequest) {
     } else if (source === "claude") {
       where.url = { contains: "claude.ai" };
     }
+    if (excludeNoise) {
+      const notPatterns: any[] = [];
+      for (const p of ["/accounts/check", "/sentinel/chat-requirements", "/moderations"]) {
+        notPatterns.push({ url: { contains: p } });
+      }
+      notPatterns.push({ AND: [{ method: "GET" }, { url: { contains: "/models" } }, { NOT: { url: { contains: "/models/" } } }] });
+      notPatterns.push({ AND: [{ method: "GET" }, { url: { contains: "/conversations" } }] });
+      notPatterns.push({ url: { contains: "claude.ai/api/organizations" } });
+      where.NOT = notPatterns;
+    }
 
     const [allLogs, total] = await Promise.all([
       prisma.bridgeLog.findMany({
@@ -121,7 +142,7 @@ export async function GET(request: NextRequest) {
 
     const logs = excludeNoise ? allLogs.filter((log) => !isBridgeNoise(log)) : allLogs;
 
-    return NextResponse.json({ logs, total, limit, offset, hasMore: offset + logs.length < total }, { headers: corsHeaders });
+    return NextResponse.json({ logs, total, limit, offset }, { headers: corsHeaders });
   } catch (error: any) {
     console.error("Bridge logs GET error:", error);
     return NextResponse.json({ logs: [], total: 0, error: error.message }, { status: 500, headers: corsHeaders });
