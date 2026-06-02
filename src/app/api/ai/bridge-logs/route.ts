@@ -70,6 +70,13 @@ const BRIDGE_NOISE_PATTERNS = [
   "/accounts/check",
   "/sentinel/chat-requirements",
   "/moderations",
+  "/api/account_profile",
+  "/api/team-trial/",
+  "/api/bootstrap/",
+  "/v1/toolbox/shttp/mcp",
+  "/api/claude_code/organizations",
+  "/api/accounts/",
+  "/api/billing/",
 ];
 
 function isBridgeNoise(log: any): boolean {
@@ -79,6 +86,8 @@ function isBridgeNoise(log: any): boolean {
   for (const pattern of BRIDGE_NOISE_PATTERNS) {
     if (url.includes(pattern)) return true;
   }
+
+  if (url.includes("s-cdn.anthropic.com")) return true;
 
   if (method === "GET" && url.includes("/models") && !url.includes("/models/")) return true;
 
@@ -122,11 +131,13 @@ export async function GET(request: NextRequest) {
     }
     if (excludeNoise) {
       const notPatterns: any[] = [];
-      for (const p of ["/accounts/check", "/sentinel/chat-requirements", "/moderations"]) {
+      for (const p of ["/accounts/check", "/sentinel/chat-requirements", "/moderations", "/api/account_profile", "/api/team-trial/", "/api/bootstrap/", "/v1/toolbox/shttp/mcp", "/api/claude_code/organizations", "/api/billing/"]) {
         notPatterns.push({ url: { contains: p } });
       }
+      notPatterns.push({ AND: [{ method: "GET" }, { url: { contains: "/accounts/" } }, { url: { contains: "claude.ai" } }] });
       notPatterns.push({ AND: [{ method: "GET" }, { url: { contains: "/models" } }, { NOT: { url: { contains: "/models/" } } }] });
       notPatterns.push({ AND: [{ method: "GET" }, { url: { contains: "/conversations" } }] });
+      notPatterns.push({ url: { contains: "s-cdn.anthropic.com" } });
       notPatterns.push({ AND: [{ method: "GET" }, { url: { contains: "claude.ai/api/organizations" } }, { NOT: { url: { contains: "/chat/" } } }] });
       where.NOT = notPatterns;
     }
